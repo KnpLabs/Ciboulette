@@ -1,6 +1,8 @@
 #!/bin/bash
 
-source lib/ciboulette_helpers
+__DIR__="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+source $__DIR__/../lib/ciboulette_helpers
 
 COMMIT=$( git rev-parse HEAD )
 PROJECT=$( basename $( pwd ) )
@@ -13,4 +15,4 @@ fi
 
 log_section "ciboulette" "running test suite for <comment>${PROJECT}</comment>:<comment>${COMMIT:0:8}</comment>"
 
-( bin/ciboulette.runner "$COMMIT" & ) > /dev/null
+( $__DIR__/ciboulette.runner "$COMMIT" & ) > /dev/null

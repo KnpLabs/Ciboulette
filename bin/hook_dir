@@ -1,6 +1,8 @@
 #!/bin/bash
 
-source lib/ciboulette_helpers
+__DIR__="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+source $__DIR__/../lib/ciboulette_helpers
 
 TYPE=$( basename $0 )
 

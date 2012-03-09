@@ -1,6 +1,8 @@
 #!/bin/bash
 
-source lib/ciboulette_helpers
+__DIR__="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+source $__DIR__/../lib/ciboulette_helpers
 
 if [ ! -d $( pwd )/.git ]; then
   log_section "install-hook" "$0 must be run at the root of a git repository"
