@@ -1,7 +1,9 @@
 #!/bin/bash
 
+source lib/ciboulette_helpers
+
 TYPE=$( basename $0 )
 
-for hook in $( find $( pwd )/.git/hooks/$TYPE.d ); do
-  ( $hook )
+for hook in $( find $( pwd )/.git/hooks/$TYPE.d -type f -o -type l ); do
+  step "hook-dir" "running <comment>$TYPE</comment> hook <comment>$( basename $hook )</comment>" $hook
 done

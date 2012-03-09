@@ -13,4 +13,4 @@ fi
 
 log_section "ciboulette" "running test suite for <comment>${PROJECT}</comment>:<comment>${COMMIT:0:8}</comment>"
 
-( ciboulette.runner "$COMMIT" & ) > /dev/null
+( bin/ciboulette.runner "$COMMIT" & ) > /dev/null
