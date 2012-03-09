@@ -1,0 +1,69 @@
+#!/bin/bash
+
+source lib/ciboulette_helpers
+
+if [ ! -d $( pwd )/.git ]; then
+  log_section "install-hook" "$0 must be run at the root of a git repository"
+  exit 1
+fi
+
+function show_help {
+  colorize "<comment>Usage:</comment>"
+  echo " $( colorize "<info>$0 type path</info>" )"
+  echo
+  colorize "<comment>Arguments:</comment>"
+  help_show_argument "<info>type</info>" "The hook type (<comment>post-commit</comment>, <comment>post-merge</comment>, etc.)"
+  help_show_argument "<info>path</info>" "Path to the executable to install as a hook"
+}
+
+function has_hook_dir {
+  local TYPE="$1"
+
+  if [ ! -h .git/hooks/$TYPE ]; then
+    echo 0
+  else
+    if [ 'hook_dir' = $( basename $( readlink .git/hooks/$TYPE ) ) ]; then
+      echo 1
+    fi
+  fi
+}
+
+if [ "$#" -lt 2 ]; then
+  show_help
+  exit 1
+fi
+
+TYPE="$1"
+HOOK="$2"
+
+DEST=".git/hooks/$TYPE"
+
+# check for a $TYPE.d directory, create it if needed
+# and move/relink possibly existing hook into it
+if [ ! -d .git/hooks/$TYPE.d ]; then
+  step "install-hook" "creating $TYPE.d directory"
+  mkdir .git/hooks/$TYPE.d
+
+  if [ -f $DEST ]; then
+    step "install-hook" "moving existing <comment>$TYPE</comment> hook"
+    mv $DEST .git/hooks/$TYPE.d/$( basename $DEST )
+  fi
+
+  if [ -h $DEST ]; then
+    step "install-hook" "relinking existing <comment>$TYPE</comment> hook"
+    TMP=$( readlink $DEST )
+    rm -f $DEST
+    ( $0 $TYPE $TMP )
+  fi
+fi
+
+if [ ! -h $DEST ]; then
+  step "install-hook" "installing <comment>hook_dir</comment> hook" "cd .git/hooks ; ln -s ../../bin/hook_dir $TYPE"
+fi
+
+if [ -f .git/hooks/$TYPE.d/$( basename $HOOK ) -o -h .git/hooks/$TYPE.d/$( basename $HOOK ) ]; then
+  log_section "install-hook" "looks like <comment>$( basename $HOOK )</comment> is already installed as a <comment>$TYPE</comment> hook"
+  exit 1
+fi
+
+step "install-hook" "installing <comment>$( basename $HOOK )</comment> as <comment>$TYPE</comment>" "( cd .git/hooks/$TYPE.d ; ln -s ../../../$HOOK $( basename $HOOK ) )"

@@ -8,16 +8,21 @@ function colorize {
   local COLOR_OFF="\033[0m"
 
   local STRING="$*"
-  STRING=${STRING/<comment>/$YELLOW}
-  STRING=${STRING/<\/comment>/$COLOR_OFF}
 
-  STRING=${STRING/<info>/$GREEN}
-  STRING=${STRING/<\/info>/$COLOR_OFF}
+  STRING=${STRING//<comment>/$YELLOW}
+  STRING=${STRING//<\/comment>/$COLOR_OFF}
 
-  STRING=${STRING/<error>/$RED}
-  STRING=${STRING/<\/error>/$COLOR_OFF}
+  STRING=${STRING//<info>/$GREEN}
+  STRING=${STRING//<\/info>/$COLOR_OFF}
+
+  STRING=${STRING//<error>/$RED}
+  STRING=${STRING//<\/error>/$COLOR_OFF}
 
   echo -e $STRING
+}
+
+function help_show_argument {
+  echo " $( colorize "$1" )    $( colorize "${*:2}" )"
 }
 
 function str_strip_xml {
@@ -37,9 +42,9 @@ function str_length {
 function step {
   local SECTION="$1"
   local MSG="$2"
-  local ALIGN=$(( 79 - $( str_length "$MSG" ) ))
+  local ALIGN=$(( 80 - $(( $( str_length "$SECTION" ) + $( str_length "$MSG" ) )) ))
 
-  log_section "$SECTION" "$MSG"
+  echo -n $( log_section "$SECTION" "$MSG" )
 
   shift 2
 

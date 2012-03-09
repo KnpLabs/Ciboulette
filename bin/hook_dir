@@ -1,0 +1,7 @@
+#!/bin/bash
+
+$TYPE=$( basename $0 )
+
+for hook in $( ls $TYPE.d ); do
+  ( $hook )
+done
