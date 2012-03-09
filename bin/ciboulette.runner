@@ -1,0 +1,60 @@
+#!/bin/bash
+
+source lib/ciboulette_helpers
+
+RUNNER=$( git config --get ciboulette.runner )
+
+if [ -z "$RUNNER" ]; then
+  log_section "ciboulette" "you need to at least configure a runner, dumbass."
+  exit 1
+fi
+
+BUILDS_FILE=$( git config --get ciboulette.builds-file || echo ".ciboulette.builds" )
+WORKDIR=$( git config --get ciboulette.workdir || echo "/tmp/ciboulette" )
+CLONE_METHOD=$( git config --get ciboulette.clone-method || echo "copy" )
+MAKE_CLEAN=$( git config --get ciboulette.clean || echo 1 )
+
+COMMIT="$1"
+SHORT_COMMIT="${COMMIT:0:8}"
+PROJECT_DIR=$( pwd )
+PROJECT=$( basename ${PROJECT_DIR} )
+PROJECT_WORKDIR="${WORKDIR}/${PROJECT}/${SHORT_COMMIT}"
+BUILD_STATUS="fail"
+
+log_section "ciboulette" "running test suite for ${YELLOW}${PROJECT}${COLOR_OFF}"
+log_section "ciboulette" "COMMIT: ${COMMIT}"
+log_section "ciboulette" "RUNNER: ${RUNNER}"
+log_section "ciboulette" "BUILDS_FILE: ${BUILDS_FILE}"
+log_section "ciboulette" "PROJECT_WORKDIR: ${PROJECT_WORKDIR}"
+log_section "ciboulette" "PROJECT_WORKDIR: ${PROJECT_DIR}"
+
+if [ ! -d $( dirname $PROJECT_WORKDIR ) ]; then
+  step "ciboulette" "creating ciboulette workspace" mkdir -p $( dirname $PROJECT_WORKDIR )
+fi
+
+if [ -d $PROJECT_WORKDIR ]; then
+  step "ciboulette" "removing already existing workdir" rm -rf $PROJECT_WORKDIR
+fi
+
+if [ $CLONE_METHOD = "copy" ]; then
+  step "ciboulette" "copying project" "( cp -r ${PROJECT_DIR} ${PROJECT_WORKDIR} ) 2> /dev/null ; true"
+else
+  step "ciboulette" "cloning project" git clone ${PROJECT_DIR} ${PROJECT_WORKDIR}
+fi
+
+step "ciboulette" "building project" "( cd ${PROJECT_WORKDIR} ; git reset --hard ${COMMIT} ; ${RUNNER} ) 2>&1 > /dev/null"
+
+BUILD_RESULT=$?
+
+if [ $BUILD_RESULT -ne 0 ]; then
+  ( ciboulette.notify.growl $PROJECT)
+else
+  BUILD_STATUS="pass"
+fi
+
+echo "$COMMIT $BUILD_STATUS" >> $BUILDS_FILE
+
+if (( $MAKE_CLEAN )); then
+  log_section "ciboulette" "cleaning the kitchen"
+  rm -rf ${PROJECT_WORKDIR}
+fi

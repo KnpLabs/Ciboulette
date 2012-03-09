@@ -1,0 +1,101 @@
+#!/bin/bash
+
+# some handy colors
+function colorize {
+  local YELLOW="\033[0;33m"
+  local GREEN="\033[0;32m"
+  local RED="\033[0;31m"
+  local COLOR_OFF="\033[0m"
+
+  local STRING="$*"
+  STRING=${STRING/<comment>/$YELLOW}
+  STRING=${STRING/<\/comment>/$COLOR_OFF}
+
+  STRING=${STRING/<info>/$GREEN}
+  STRING=${STRING/<\/info>/$COLOR_OFF}
+
+  STRING=${STRING/<error>/$RED}
+  STRING=${STRING/<\/error>/$COLOR_OFF}
+
+  echo -e $STRING
+}
+
+function str_strip_xml {
+  local STRING="$*"
+  echo $STRING | sed -e "s:<\(.*\)>\(.*\)</\1>:\1:g"
+}
+
+# @param string The string to find the length of
+function str_length {
+  # try hard to strip color codes
+  local STRING=$( str_strip_xml "$*" )
+  echo -e "$STRING" | wc -c | grep -Eo "[0-9]+"
+}
+
+# @param string A message to display
+# @param string The command to execute
+function step {
+  local SECTION="$1"
+  local MSG="$2"
+  local ALIGN=$(( 79 - $( str_length "$MSG" ) ))
+
+  log_section "$SECTION" "$MSG"
+
+  shift 2
+
+  local CMD="$*"
+
+  if (( $DEBUG )); then
+    echo
+    echo "    $CMD"
+  else
+    if [ -z "$LOG_FILE" ]; then
+      local OUTPUT=$( eval $CMD )
+    else
+      local OUTPUT=$( eval $CMD >> $LOG_FILE )
+    fi
+
+    local STATUS=$?
+
+    if [ $STATUS -eq 0 ]; then
+      printf "%${ALIGN}s\n" $( colorize "<info>[ok]</info>" )
+    else
+      printf "%${ALIGN}s\n" $( colorize "<error>[fail]</error>" )
+      if [ ! -z "$OUTPUT" ]; then
+        echo -e "$OUTPUT"
+      fi
+    fi
+
+    return $STATUS
+  fi
+}
+
+# @param string Question to ask
+# @param string Name of the variable to fetch the answer in
+function ask {
+  echo -ne $( colorize "<comment>${1}:</comment> " )
+  read $2
+}
+
+# @param string Question to ask
+# @param string Name of the variable to fetch the answer in
+function confirm {
+  echo -ne $( colorize "<comment>${1}</comment> <info>[y/N]</info> " )
+  read -n1 TMP
+
+  if [ "$TMP" = "y" ]; then
+    eval $2=1
+  else
+    eval $2=0
+  fi
+
+  if [ ! -z "$TMP" ]; then
+    echo
+  fi
+}
+
+# @param string Section name
+# @param string Message to display
+function log_section {
+  colorize "<comment>[${1}]</comment> ${2}"
+}

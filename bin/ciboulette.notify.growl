@@ -1,0 +1,7 @@
+#!/bin/bash
+
+GROWL=$( which growlnotify )
+
+if [ ! -z "$GROWL" ]; then
+  $GROWL "Local CI" -m "Build failed for $1"
+fi
