@@ -47,7 +47,7 @@ step "ciboulette" "building project" "( cd ${PROJECT_WORKDIR} ; git reset --hard
 BUILD_RESULT=$?
 
 if [ $BUILD_RESULT -ne 0 ]; then
-  ( ciboulette.notify.growl $PROJECT)
+  ( bin/ciboulette.notify.growl $PROJECT)
 else
   BUILD_STATUS="pass"
 fi
