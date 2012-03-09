@@ -15,18 +15,16 @@ CLONE_METHOD=$( git config --get ciboulette.clone-method || echo "copy" )
 MAKE_CLEAN=$( git config --get ciboulette.clean || echo 1 )
 
 COMMIT="$1"
+
+if [ -z "$COMMIT" ]; then
+  COMMIT=$( git rev-parse HEAD )
+fi
+
 SHORT_COMMIT="${COMMIT:0:8}"
 PROJECT_DIR=$( pwd )
 PROJECT=$( basename ${PROJECT_DIR} )
 PROJECT_WORKDIR="${WORKDIR}/${PROJECT}/${SHORT_COMMIT}"
 BUILD_STATUS="fail"
-
-log_section "ciboulette" "running test suite for ${YELLOW}${PROJECT}${COLOR_OFF}"
-log_section "ciboulette" "COMMIT: ${COMMIT}"
-log_section "ciboulette" "RUNNER: ${RUNNER}"
-log_section "ciboulette" "BUILDS_FILE: ${BUILDS_FILE}"
-log_section "ciboulette" "PROJECT_WORKDIR: ${PROJECT_WORKDIR}"
-log_section "ciboulette" "PROJECT_WORKDIR: ${PROJECT_DIR}"
 
 if [ ! -d $( dirname $PROJECT_WORKDIR ) ]; then
   step "ciboulette" "creating ciboulette workspace" mkdir -p $( dirname $PROJECT_WORKDIR )

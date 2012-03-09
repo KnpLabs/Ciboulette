@@ -55,20 +55,15 @@ function step {
     echo "    $CMD"
   else
     if [ -z "$LOG_FILE" ]; then
-      local OUTPUT=$( eval $CMD )
+      local STATUS=$( eval $CMD 2>&1 > /dev/null ; echo $? )
     else
-      local OUTPUT=$( eval $CMD >> $LOG_FILE )
+      local STATUS=$( eval $CMD 2>&1 >> $LOG_FILE ; echo $? )
     fi
-
-    local STATUS=$?
 
     if [ $STATUS -eq 0 ]; then
       printf "%${ALIGN}s\n" $( colorize "<info>[ok]</info>" )
     else
       printf "%${ALIGN}s\n" $( colorize "<error>[fail]</error>" )
-      if [ ! -z "$OUTPUT" ]; then
-        echo -e "$OUTPUT"
-      fi
     fi
 
     return $STATUS
