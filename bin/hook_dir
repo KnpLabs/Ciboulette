@@ -2,6 +2,6 @@
 
 TYPE=$( basename $0 )
 
-for hook in $( ls .git/hooks/$TYPE.d ); do
+for hook in $( find $( pwd )/.git/hooks/$TYPE.d ); do
   ( $hook )
 done
