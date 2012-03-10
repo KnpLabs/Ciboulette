@@ -1,0 +1,16 @@
+#!/bin/bash
+
+source $( ciboulette --prefix )/lib/ciboulette_helpers
+
+COMMIT=$( git rev-parse HEAD )
+PROJECT=$( basename $( pwd ) )
+RUNNER=$( git config --get ciboulette.runner )
+
+if [ -z "$RUNNER" ]; then
+  log_section "ciboulette" "no runner configured for <comment>${PROJECT}</comment>"
+  exit 1
+fi
+
+log_section "ciboulette" "running test suite for <comment>${PROJECT}</comment>:<comment>${COMMIT:0:8}</comment>"
+
+( ciboulette.runner "$COMMIT" & ) > /dev/null

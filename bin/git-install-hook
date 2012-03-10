@@ -1,11 +1,9 @@
 #!/bin/bash
 
-__DIR__="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-source $__DIR__/../lib/ciboulette_helpers
+source $( ciboulette --prefix )/lib/ciboulette_helpers
 
 if [ ! -d $( pwd )/.git ]; then
-  log_section "install-hook" "$0 must be run at the root of a git repository"
+  echo "$0 must be run at the root of a git repository"
   exit 1
 fi
 
@@ -43,16 +41,16 @@ DEST=".git/hooks/$TYPE"
 # check for a $TYPE.d directory, create it if needed
 # and move/relink possibly existing hook into it
 if [ ! -d .git/hooks/$TYPE.d ]; then
-  step "install-hook" "creating $TYPE.d directory"
+  step "creating $TYPE.d directory"
   mkdir .git/hooks/$TYPE.d
 
   if [ -f $DEST ]; then
-    step "install-hook" "moving existing <comment>$TYPE</comment> hook"
+    step "moving existing <comment>$TYPE</comment> hook"
     mv $DEST .git/hooks/$TYPE.d/$( basename $DEST )
   fi
 
   if [ -h $DEST ]; then
-    step "install-hook" "relinking existing <comment>$TYPE</comment> hook"
+    step "relinking existing <comment>$TYPE</comment> hook"
     TMP=$( readlink $DEST )
     rm -f $DEST
     ( $0 $TYPE $TMP )
@@ -60,12 +58,16 @@ if [ ! -d .git/hooks/$TYPE.d ]; then
 fi
 
 if [ ! -h $DEST ]; then
-  step "install-hook" "installing <comment>hook_dir</comment> hook" "cd .git/hooks ; ln -s ../../bin/hook_dir $TYPE"
+  step "installing <comment>hook_dir</comment> hook" "cd .git/hooks ; ln -s ../../bin/hook_dir $TYPE"
 fi
 
 if [ -f .git/hooks/$TYPE.d/$( basename $HOOK ) -o -h .git/hooks/$TYPE.d/$( basename $HOOK ) ]; then
-  log_section "install-hook" "looks like <comment>$( basename $HOOK )</comment> is already installed as a <comment>$TYPE</comment> hook"
+  colorize "looks like <comment>$( basename $HOOK )</comment> is already installed as a <comment>$TYPE</comment> hook"
   exit 1
 fi
 
-step "install-hook" "installing <comment>$( basename $HOOK )</comment> as <comment>$TYPE</comment>" "( cd .git/hooks/$TYPE.d ; ln -s ../../../$HOOK $( basename $HOOK ) )"
+if [ ${HOOK:0:1} != "/" ]; then
+  $HOOK="../../../$HOOK"
+fi
+
+step "installing <comment>$( basename $HOOK )</comment> as <comment>$TYPE</comment>" "( cd .git/hooks/$TYPE.d ; ln -s $HOOK $( basename $HOOK ) )"

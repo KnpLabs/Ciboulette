@@ -2,17 +2,110 @@
 
 __DIR__="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-source $__DIR__/../lib/ciboulette_helpers
-
-COMMIT=$( git rev-parse HEAD )
-PROJECT=$( basename $( pwd ) )
-RUNNER=$( git config --get ciboulette.runner )
-
-if [ -z "$RUNNER" ]; then
-  log_section "ciboulette" "no runner configured for <comment>${PROJECT}</comment>"
-  exit 1
+if [ "$1" = "--prefix" ]; then
+  ( dirname $__DIR__ )
+  exit 0
 fi
 
-log_section "ciboulette" "running test suite for <comment>${PROJECT}</comment>:<comment>${COMMIT:0:8}</comment>"
+source "$__DIR__/../lib/ciboulette_helpers"
 
-( $__DIR__/ciboulette.runner "$COMMIT" & ) > /dev/null
+function check_git_repo {
+  if [ ! -d .git ]; then
+    colorize "must be run in a git repository root"
+    exit 1
+  fi
+}
+
+function install {
+  check_git_repo
+  git install-hook post-commit "$( ciboulette --prefix )/bin/ciboulette.hook"
+  echo
+  colorize "<comment>post-commit</comment> hook has been installed"
+  colorize "now you want to configure a runner using the following command:"
+  colorize " <info>git config --add ciboulette.runner run_tests</info>"
+  echo
+  colorize "alternatively, you can run <info>ciboulette --config</info> to interactively configure ciboulette"
+}
+
+function has_config {
+  grep ciboulette .git/config > /dev/null
+
+  if (( $? )); then
+    echo 0
+  else
+    echo 1
+  fi
+}
+
+function unconfig {
+  step "removing configuration" "git config --remove-section ciboulette"
+}
+
+function reconfig {
+  unconfig > /dev/null
+  config
+}
+
+function config {
+  check_git_repo
+
+  if (( $( has_config ) )); then
+    colorize "sorry, <comment>ciboulette</comment> is already configured on this repository"
+    return 1
+  fi
+
+  colorize "welcome to <comment>ciboulette</comment>'s interactive configurator!"
+  colorize "all questions are optional, just press <comment>enter</comment> to skip a question"
+  echo
+
+  ask "the test suite runner" RUNNER
+  add_config ciboulette.runner $RUNNER
+
+  ask "where to store builds log" BUILDS_FILE
+  add_config ciboulette.builds-file $BUILDS_FILE
+
+  echo
+
+  colorize "thanks! configuration is now over."
+  colorize "remember, it's all really in your <comment>.git/config</comment> file"
+}
+
+function add_config {
+  if [ ! -z "$2" ]; then
+    git config --add "$1" "$2"
+  else
+    colorize "skipping <comment>$1</comment>"
+  fi
+}
+
+function uninstall {
+  check_git_repo
+  if [ -h .git/hooks/post-commit.d/ciboulette.hook ]; then
+    step "removing ciboulette hook" rm -f .git/hooks/post-commit.d/ciboulette.hook
+    step "removing configuration" unconfig
+  else
+    colorize "ciboulette does not seem to be installed"
+  fi
+}
+
+for arg do
+  case $arg in
+    --config)
+      config
+      ;;
+    --unconfig)
+      unconfig
+      ;;
+    --reconfig)
+      reconfig
+      ;;
+    --install)
+      install
+      ;;
+    --uninstall)
+      uninstall
+      ;;
+  esac
+done
+
+exit $?

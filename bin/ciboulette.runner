@@ -1,13 +1,11 @@
 #!/bin/bash
 
-__DIR__="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-source $__DIR__/../lib/ciboulette_helpers
+source $( ciboulette --prefix )/lib/ciboulette_helpers
 
 RUNNER=$( git config --get ciboulette.runner )
 
 if [ -z "$RUNNER" ]; then
-  log_section "ciboulette" "you need to at least configure a runner, dumbass."
+  colorize "you need to at least configure a runner, dumbass."
   exit 1
 fi
 
@@ -29,25 +27,25 @@ PROJECT_WORKDIR="${WORKDIR}/${PROJECT}/${SHORT_COMMIT}"
 BUILD_STATUS="fail"
 
 if [ ! -d $( dirname $PROJECT_WORKDIR ) ]; then
-  step "ciboulette" "creating ciboulette workspace" mkdir -p $( dirname $PROJECT_WORKDIR )
+  step "creating ciboulette workspace" mkdir -p $( dirname $PROJECT_WORKDIR )
 fi
 
 if [ -d $PROJECT_WORKDIR ]; then
-  step "ciboulette" "removing already existing workdir" rm -rf $PROJECT_WORKDIR
+  step "removing already existing workdir" rm -rf $PROJECT_WORKDIR
 fi
 
 if [ $CLONE_METHOD = "copy" ]; then
-  step "ciboulette" "copying project" "( cp -r ${PROJECT_DIR} ${PROJECT_WORKDIR} ) 2> /dev/null ; true"
+  step "copying project" "( cp -r ${PROJECT_DIR} ${PROJECT_WORKDIR} ) 2> /dev/null ; true"
 else
-  step "ciboulette" "cloning project" git clone ${PROJECT_DIR} ${PROJECT_WORKDIR}
+  step "cloning project" git clone ${PROJECT_DIR} ${PROJECT_WORKDIR}
 fi
 
-step "ciboulette" "building project" "( cd ${PROJECT_WORKDIR} ; git reset --hard ${COMMIT} ; ${RUNNER} ) 2>&1 > /dev/null"
+step "building project" "( cd ${PROJECT_WORKDIR} ; git reset --hard ${COMMIT} ; ${RUNNER} ) 2>&1 > /dev/null"
 
 BUILD_RESULT=$?
 
 if [ $BUILD_RESULT -ne 0 ]; then
-  ( bin/ciboulette.notify.growl $PROJECT)
+  ( ciboulette.notify.growl $PROJECT)
 else
   BUILD_STATUS="pass"
 fi
@@ -55,6 +53,6 @@ fi
 echo "$COMMIT $BUILD_STATUS" >> $BUILDS_FILE
 
 if (( $MAKE_CLEAN )); then
-  log_section "ciboulette" "cleaning the kitchen"
+  echo "cleaning the kitchen"
   rm -rf ${PROJECT_WORKDIR}
 fi

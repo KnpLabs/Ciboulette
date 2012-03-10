@@ -1,11 +1,25 @@
 #!/bin/bash
 
+if [ -z "$LOADED" ]; then
+
+LOADED=1
+
+function writeln {
+  NL="\n"
+  if [ "$1" = "-n" ]; then
+    NL=""
+    shift
+  fi
+
+  printf "$( colorize "$*" )$NL"
+}
+
 # some handy colors
 function colorize {
-  local YELLOW="\033[0;33m"
-  local GREEN="\033[0;32m"
-  local RED="\033[0;31m"
-  local COLOR_OFF="\033[0m"
+  local YELLOW='\033[0;33m'
+  local GREEN='\033[0;32m'
+  local RED='\033[0;31m'
+  local COLOR_OFF='\033[0m'
 
   local STRING="$*"
 
@@ -18,7 +32,7 @@ function colorize {
   STRING=${STRING//<error>/$RED}
   STRING=${STRING//<\/error>/$COLOR_OFF}
 
-  echo -e $STRING
+  ( echo -e "$STRING" | sed -e 's/^-[a-z]* //' )
 }
 
 function help_show_argument {
@@ -34,19 +48,18 @@ function str_strip_xml {
 function str_length {
   # try hard to strip color codes
   local STRING=$( str_strip_xml "$*" )
-  echo -e "$STRING" | wc -c | grep -Eo "[0-9]+"
+  echo "$STRING" | wc -c | grep -Eo "[0-9]+"
 }
 
 # @param string A message to display
 # @param string The command to execute
 function step {
-  local SECTION="$1"
-  local MSG="$2"
-  local ALIGN=$(( 80 - $(( $( str_length "$SECTION" ) + $( str_length "$MSG" ) )) ))
+  local MSG="$1"
+  local ALIGN=$(( 80 - $( str_length "$MSG" ) ))
 
-  echo -n $( log_section "$SECTION" "$MSG" )
+  writeln -n "$MSG"
 
-  shift 2
+  shift
 
   local CMD="$*"
 
@@ -55,12 +68,12 @@ function step {
     echo "    $CMD"
   else
     if [ -z "$LOG_FILE" ]; then
-      local STATUS=$( eval $CMD 2>&1 > /dev/null ; echo $? )
+      local STATUS=$( eval $CMD > /dev/null 2>&1 ; echo $? )
     else
-      local STATUS=$( eval $CMD 2>&1 >> $LOG_FILE ; echo $? )
+      local STATUS=$( eval "$CMD >> $LOG_FILE 2>&1" ; echo $? )
     fi
 
-    if [ $STATUS -eq 0 ]; then
+    if [ -z "$STATUS" -o "$STATUS" -eq 0 ]; then
       printf "%${ALIGN}s\n" $( colorize "<info>[ok]</info>" )
     else
       printf "%${ALIGN}s\n" $( colorize "<error>[fail]</error>" )
@@ -73,14 +86,14 @@ function step {
 # @param string Question to ask
 # @param string Name of the variable to fetch the answer in
 function ask {
-  echo -ne $( colorize "<comment>${1}:</comment> " )
+  writeln -n "$( colorize "<info>${1}:</info>" ) "
   read $2
 }
 
 # @param string Question to ask
 # @param string Name of the variable to fetch the answer in
 function confirm {
-  echo -ne $( colorize "<comment>${1}</comment> <info>[y/N]</info> " )
+  writeln -n "$( colorize "<info>${1}</info> <info>[y/N]</info>" ) "
   read -n1 TMP
 
   if [ "$TMP" = "y" ]; then
@@ -94,8 +107,4 @@ function confirm {
   fi
 }
 
-# @param string Section name
-# @param string Message to display
-function log_section {
-  colorize "<comment>[${1}]</comment> ${2}"
-}
+fi
