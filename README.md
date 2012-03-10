@@ -8,6 +8,15 @@ Ciboulette is a local, unobtrusive CI server. It is designed to run as a git `po
 
 ![Ciboulette](http://f.cl.ly/items/0P3a3I2f241C0n3H3O3F/Screen%20Shot%202012-03-10%20at%201.22.05%20AM.png)
 
+As you can see, Ciboulette runs after each commit. What you can not see, though, is that it runs builds asynchronously as to not block your commit workflow.
+
+Also seen in this screenshot:
+
+* Growl notification of a failed build
+* the `\o/` smiley in my prompt means current `HEAD`'s build passed
+* `???` means ciboulette did not build current `HEAD` yet
+* had I waited a little bit to take screenshot, you could have seen my prompt change to `/o\`, indicating a failed build.
+
 ## Installation
 
 1. clone the repository
