@@ -48,7 +48,7 @@ If you are adventurous, I wrote the following bash function to display the curre
 
 ```
 function prompt_head_build_status {
-  if [ ! -d .git ]; then
+  if [ ! -d .git -o ! -f .ciboulette.builds ]; then
     return 0
   fi
 
