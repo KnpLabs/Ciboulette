@@ -6,6 +6,8 @@ __NOTE__ This is alpha software, it might very well completely mess with your gi
 
 Ciboulette is a local, unobtrusive CI server. It is designed to run as a git `post-commit` hook.
 
+![Ciboulette](http://f.cl.ly/items/0P3a3I2f241C0n3H3O3F/Screen%20Shot%202012-03-10%20at%201.22.05%20AM.png)
+
 ## Installation
 
 1. clone the repository
